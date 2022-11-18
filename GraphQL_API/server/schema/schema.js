@@ -1,21 +1,27 @@
 const { response } = require("express");
-const { graphql, buildSchema, isSchema } = require("graphql");
+const { graphql, buildSchema, isSchema, GraphQLList } = require("graphql");
 const { GraphQLObjectType, GraphQLInt, GraphQLString, GraphQLSchema, GraphQLID } = require("graphql");
 const _ = require('lodash')
 
 const ProjectType = new GraphQLObjectType({
   name: 'Project',
-  fields: {
+  fields: () => ({
     id: {type: GraphQLID},
     title: {type: GraphQLString},
     weight: {type: GraphQLInt},
     description: {type: GraphQLString},
-  }
+    tasks: {
+      type: new GraphQLList(TaskType),
+      resolve(parent, args){
+        return _.filter(tasks, {projectId: parent.id})
+      }
+    }
+  })
 })
 
 const TaskType = new GraphQLObjectType({
   name: 'task',
-  fields: {
+  fields: () =>({
     id: {type: GraphQLID},
     title: {type: GraphQLString},
     weight: {type: GraphQLInt},
@@ -26,14 +32,14 @@ const TaskType = new GraphQLObjectType({
         return _.find(projects, {id: parent.projectId})
       }
     }
-  }
+  })
 });
 
 
 
 const RootQuery = new GraphQLObjectType({
   name: 'RootQueryType',
-  fields: {
+  fields: () => ({
     task: {
       type: TaskType,
       args: {
@@ -52,7 +58,7 @@ const RootQuery = new GraphQLObjectType({
         return _.find(projects, {id: args.id})
       }
     }
-  }});
+  })});
 
 schema = new GraphQLSchema({
   query:RootQuery
